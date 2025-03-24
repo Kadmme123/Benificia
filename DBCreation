@@ -1,0 +1,181 @@
+-- =============================================
+-- 1) Table: clients
+-- =============================================
+CREATE TABLE IF NOT EXISTS clients (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    exchange_commission_rate NUMERIC DEFAULT 0,
+    tax_on_gains_rate        NUMERIC DEFAULT 15,
+    is_pea                   BOOLEAN DEFAULT FALSE,
+    management_fee_rate      NUMERIC DEFAULT 0
+);
+
+-- =============================================
+-- 2) Table: portfolios
+--  Each row holds a position (valeur) in a client's portfolio
+-- =============================================
+CREATE TABLE IF NOT EXISTS portfolios (
+    id         SERIAL PRIMARY KEY,
+    client_id  INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    valeur     TEXT NOT NULL,
+    quantité   NUMERIC DEFAULT 0,
+    vwap       NUMERIC DEFAULT 0,
+    cours      NUMERIC DEFAULT 0,
+    valorisation NUMERIC DEFAULT 0
+);
+
+-- =============================================
+-- 3) Table: instruments 
+--  Used to store the "Instrument_name," 
+--  "nombre_de_titres," and "facteur_flottant" 
+--  for computing Poids Masi or other use-cases
+-- =============================================
+CREATE TABLE IF NOT EXISTS instruments (
+    id                 SERIAL PRIMARY KEY,
+    instrument_name    TEXT UNIQUE NOT NULL,
+    nombre_de_titres   NUMERIC DEFAULT 0,
+    facteur_flottant   NUMERIC DEFAULT 0
+);
+
+-- =============================================
+-- 4) Table: performance_periods
+--  Used to track start_date / start_value for 
+--  each client, enabling performance and fees calculations
+-- =============================================
+CREATE TABLE IF NOT EXISTS performance_periods (
+    id         SERIAL PRIMARY KEY,
+    client_id  INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    start_date DATE NOT NULL,
+    start_value NUMERIC DEFAULT 0,
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- OPTIONAL: Indexes for performance (example)
+-- =============================================
+-- If you'd like to speed up certain queries, you can create indexes like so:
+
+-- For quick lookups on portfolios by (client_id, valeur):
+CREATE INDEX IF NOT EXISTS idx_portfolios_client_valeur
+  ON portfolios (client_id, valeur);
+
+-- For quick lookups on performance_periods by (client_id, start_date):
+CREATE INDEX IF NOT EXISTS idx_perfperiods_clientdate
+  ON performance_periods (client_id, start_date);
+
+-- That's all for the schema. 
+-- =============================================
+
+
+
+
+CREATE TABLE IF NOT EXISTS portfolios (
+    id           SERIAL PRIMARY KEY,
+    client_id    INT NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    valeur       TEXT NOT NULL,
+    quantité     NUMERIC DEFAULT 0,
+    vwap         NUMERIC DEFAULT 0,
+    cours        NUMERIC DEFAULT 0,
+    valorisation NUMERIC DEFAULT 0,
+
+    -- Here's the needed unique constraint:
+    UNIQUE (client_id, valeur)
+);
+
+
+ALTER TABLE portfolios
+  ADD CONSTRAINT portfolios_client_valeur_key
+  UNIQUE (client_id, valeur);
+
+
+client.table("portfolios").upsert(rows, on_conflict="client_id,valeur").execute()
+
+
+
+
+-- 1) Turn on RLS (you already did, but let's confirm)
+ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
+
+-- 2) Create a policy that allows SELECT for all authenticated users
+CREATE POLICY "Select all rows in portfolios"
+ON public.portfolios
+FOR SELECT
+TO authenticated
+USING (true);  -- no restriction => can read all
+
+-- 3) Create a policy that allows INSERT for all authenticated users
+CREATE POLICY "Insert rows into portfolios"
+ON public.portfolios
+FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+-- 4) Create a policy that allows UPDATE for all authenticated users
+CREATE POLICY "Update rows in portfolios"
+ON public.portfolios
+FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- 5) (Optional) Create a policy for DELETE if you want them to remove rows
+CREATE POLICY "Delete rows in portfolios"
+ON public.portfolios
+FOR DELETE
+TO authenticated
+USING (true);
+
+
+
+
+CREATE POLICY "Update rows" 
+ON public.portfolios
+FOR UPDATE
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+
+CREATE POLICY "Delete rows"
+ON public.portfolios
+FOR DELETE
+TO authenticated
+USING (true);
+
+
+
+client.table("portfolios")
+    .update({...})
+    .eq("client_id", cid)
+    .eq("valeur", str(stock_name))
+    .execute()
+
+
+
+client.table("portfolios")
+    .delete()
+    .eq("client_id", cid)
+    .eq("valeur", str(stock_name))
+    .execute()
+
+
+
+
+
+secret :
+
+[supabase]
+url="https://koguhddaikzhyaexfoop.supabase.co"
+key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvZ3VoZGRhaWt6aHlhZXhmb29wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzk5MDgyNTIsImV4cCI6MjA1NTQ4NDI1Mn0.vKTHGfdUhx5FDC7di7rkTYw3bAvMs2tmYAfastOERwQ"
+[theme]
+base="light"
+primaryColor="#4ba3ff"
+backgroundColor="#f3f3ed"
+
+
+
+
+
+
+
+
