@@ -14,7 +14,7 @@ from pages import (
 )
 
 def add_sidebar_logo():
-    st.sidebar.image("Image-1.jpg", width=250)
+    st.sidebar.image("logo.png", width=250)
     st.sidebar.title("Beneficia Capital")
 
 def main():
